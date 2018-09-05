@@ -1,7 +1,6 @@
 import { GalaxyElement, html, css } from 'https://cdn.jsdelivr.net/gh/LosMaquios/GalaxyJS@b1bf99b9134ae379415c77738a1c411bd304ef03/dist/galaxy.esm.js'
 
-const BOMB = 0xB
-const EMPTY = 0
+import { VALUES } from '../constants.js'
 
 const UNIT_REGEX = /^(?<size>[-.\d]+)(?<unit>[a-zA-Z]+)$/
 
@@ -32,6 +31,7 @@ export default class MineSweeper extends GalaxyElement {
 
         background-color: var(--background-color);
 
+        font-size: calc(var(--cell-size) - 5px);
         text-align: center;
         width: var(--cell-size);
         height: var(--cell-size);
@@ -55,7 +55,7 @@ export default class MineSweeper extends GalaxyElement {
         :class="{ revealed: cell.reveal, flag: cell.flag }"
         @click="!(cell.reveal || cell.flag) && checkCell($index, cell)"
         @contextmenu.prevent="!cell.reveal && checkBomb(cell)">
-        {{ cell.reveal ? (cell.value === 11 ? 'B' : cell.value) : cell.flag ? 'F' : '' }}
+        {{ cell | getEmoji }}
       </div>
     `
   }
@@ -108,7 +108,7 @@ export default class MineSweeper extends GalaxyElement {
     // 1. Fill with bombs
     for (let i = 0; i < length; i++) {
       board[i] = {
-        value: i < bombs ? BOMB : EMPTY,
+        value: i < bombs ? VALUES.BOMB : VALUES.EMPTY,
         reveal: false,
         flag: false
       }
@@ -121,11 +121,11 @@ export default class MineSweeper extends GalaxyElement {
     for (let i = 0; i < length; i++) {
       const cell = board[i]
 
-      if (cell.value === BOMB) {
+      if (cell.value === VALUES.BOMB) {
         for (const offset of this._getAdjacents(i)) {
           const adjacent = board[offset + i]
 
-          if (adjacent && adjacent.value !== BOMB) {
+          if (adjacent && adjacent.value !== VALUES.BOMB) {
             ++adjacent.value
           }
         }
@@ -143,7 +143,7 @@ export default class MineSweeper extends GalaxyElement {
       if (adjacent && !adjacent.reveal) {
         adjacent.reveal = true
 
-        if (adjacent.value === EMPTY) {
+        if (adjacent.value === VALUES.EMPTY) {
           this._revealAdjacents(adjacentIndex)
         }
       }
@@ -154,12 +154,13 @@ export default class MineSweeper extends GalaxyElement {
     cell.reveal = true
 
     switch (cell.value) {
-      case EMPTY:
+      case VALUES.EMPTY:
         this._revealAdjacents(index)
         break
-      case BOMB:
+
+      case VALUES.BOMB:
         this.state.board.forEach(cell => {
-          if (cell.value === BOMB) {
+          if (cell.value === VALUES.BOMB) {
             cell.reveal = true
           }
         })
